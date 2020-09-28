@@ -1,0 +1,13 @@
+*.h5
+*.hf5
+*.hdf5
+*.pdf
+*.png
+*.gz
+*.jpg
+*.tif
+*.tfevents.*
+.spyderworkspace
+.spyproject
+*.pyc
+.idea*
