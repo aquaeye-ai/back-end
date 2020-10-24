@@ -14,6 +14,7 @@ import logging
 
 import numpy as np
 
+from falcon_cors import CORS
 from tensorflow import keras
 
 
@@ -163,11 +164,17 @@ class EvalResource(object):
         resp.body = json.dumps(response)
         resp.status = falcon.HTTP_201
 
+cors = CORS(
+    allow_all_origins=True,
+    allow_all_headers=True,
+    allow_all_methods=True
+)
 
 # this can't be in __main__ for some reason...TODO find out why
 app = falcon.API(middleware=[
         RequireJSON(),
         JSONTranslator(),
+        cors.middleware
     ])
 eval_resource = EvalResource()
 num_classes_resource = NumClassesResource()

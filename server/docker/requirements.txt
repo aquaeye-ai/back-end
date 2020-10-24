@@ -1,3 +1,4 @@
 pyyaml
 falcon
+falcon-cors
 numpy
