@@ -115,17 +115,15 @@ class EvalResource(object):
                 'Missing thing',
                 'A thing must be submitted in the request body.')
 
-        doc_str = json.loads(doc)
-
-        # Get the image id, height, width and data from the JOSN msg.
-        image = base64.b64decode(doc_str['image'])
+        # Get the image id, height, width and data from the JSON msg.
+        image = base64.b64decode(doc['image'])
         image = np.frombuffer(image, dtype=np.uint8).copy()
         image = cv2.imdecode(image, flags=1)
-        id = doc_str['id']
-        height = doc_str['height']
-        width = doc_str['width']
-        depth = doc_str['depth']
-        K = doc_str['K']
+        id = doc['id']
+        height = doc['height']
+        width = doc['width']
+        depth = doc['depth']
+        K = doc['K']
 
         print("id: {}".format(id))
         print("source shape: {}x{}".format(height, width))
