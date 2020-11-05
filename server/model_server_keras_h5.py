@@ -176,8 +176,8 @@ app = falcon.API(middleware=[
     ])
 eval_resource = EvalResource()
 num_classes_resource = NumClassesResource()
-app.add_route('/eval', eval_resource)
-app.add_route('/num_classes', num_classes_resource)
+app.add_route('/predict/one', eval_resource)
+app.add_route('/num-classes', num_classes_resource)
 app.add_route('/quote', QuoteResource())
 
 
