@@ -5,4 +5,9 @@
 source config.sh
 
 # Expose ports and run
-gunicorn3 --bind $HOST model_server_keras_h5:app
+if [ $ENVIRONMENT = "PROD" ]
+then
+  gunicorn3 --bind $HOST_PROD model_server_keras_h5:app
+else
+  gunicorn3 --bind $HOST_DEV model_server_keras_h5:app
+fi

@@ -7,10 +7,10 @@
 # 2) paths are relative to top level directory: calacademy-fish-id/
 
 # path to model .hdf file
-model: ./model/retrained_model_starting_at_layer_100.h5
+model: ../../model/retrained_model_starting_at_layer_100.h5
 
 # path to labels file
-labels: ./model/train_labels.txt
+labels: ../../model/train_labels.txt
 
 # model input height
 model_input_height: 224
