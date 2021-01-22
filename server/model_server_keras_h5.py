@@ -13,10 +13,10 @@ import base64
 import logging
 
 import numpy as np
+import tensorflow as tf
 
 from falcon_cors import CORS
 from tensorflow import keras
-
 
 class RequireJSON(object):
 
@@ -97,12 +97,8 @@ class EvalResource(object):
     def __init__(self):
         self.logger = logging.getLogger('modelserver.' +  __name__)
 
-    def init(self, model=None, model_input_height=None, model_input_width=None, scale=None, category_index=None):
-        self.model = model
-        self.model_input_height = model_input_height
-        self.model_input_width = model_input_width
-        self.scale = scale
-        self.category_index = category_index
+    def init(self, models=None):
+        self.models = models
 
     def on_post(self, req, resp):
 
@@ -124,23 +120,26 @@ class EvalResource(object):
         width = doc['width']
         depth = doc['depth']
         K = doc['K']
+        m_name = doc['model']
+        model = self.models[m_name]
 
         print("id: {}".format(id))
         print("source shape: {}x{}".format(height, width))
-        print("target shape: {}x{}".format(self.model_input_height, self.model_input_width))
+        print("target shape: {}x{}".format(model_input_height, model_input_width))
+        print("model: {}".format(m_name))
 
         # scale image since we trained on scaled images
-        image = image * (1. / self.scale)
+        image = image * (1. / model.scale)
 
         # reshape into original dimensions
         image = np.reshape(image, (height, width, depth))
 
         # resize image to fit model input dimensions
-        image = cv2.resize(image, dsize=(self.model_input_height, self.model_input_width), interpolation=cv2.INTER_LINEAR)
+        image = cv2.resize(image, dsize=(model.model_input_height, model.model_input_width), interpolation=cv2.INTER_LINEAR)
         image = np.expand_dims(image, axis=0)
 
         # Perform evaluation of the image
-        output_dict = self.model.predict(image)
+        output_dict = model.predict(image)
 
         class_scores = output_dict[0]
 
@@ -162,6 +161,24 @@ class EvalResource(object):
         resp.body = json.dumps(response)
         resp.status = falcon.HTTP_201
 
+# class to abstract the infrastructure around loading/predicting a model
+class Model:
+    def __init__(self, config):
+       self.model_input_height = config["model_input_height"]
+       self.model_input_width = config["model_input_width"]
+       self.scale = config["scale"]
+       self.category_index = config["category_index"]
+       self.graph = tf.Graph()
+       with self.graph.as_default():
+           self.session = tf.compat.v1.Session()
+           with self.session.as_default():
+               self.model = keras.models.load_model(path_to_model_h5)
+
+    def predict(self, X):
+        with self.graph.as_default():
+            with self.session.as_default():
+                return self.model.predict(X)
+
 cors = CORS(
     allow_all_origins=True,
     allow_all_headers=True,
@@ -181,44 +198,43 @@ app.add_route('/num-classes', num_classes_resource)
 app.add_route('/quote', QuoteResource())
 
 
-if __name__ == 'model_server_keras_h5':
+if __name__ == 'model_server_keras_h5':	
     # we expect, as a hand-shake agreement, that there is a .yml config file in top level of lib/configs directory
     config_dir = os.path.join('.')
     yaml_path = os.path.join(config_dir, 'model_server_keras_h5.yml')
     with open(yaml_path, "r") as stream:
         config = yaml.load(stream)
+    
+    models = {}
 
-    ## collect hyper parameters/args from config
-    # NOTE: float() is required to parse any exponentials since YAML sends exponentials as strings
-    # model_name = config["model_name"]
-    # download_base = config["download_base"]
-    path_to_model_h5 = config["model"]
-    path_to_labels = config["labels"]
-    print(os.listdir('.'))
-    model_input_height = config["model_input_height"]
-    model_input_width = config["model_input_width"]
-    scale = config["scale"]
+    for m_name in config["models"]:
+        ## collect hyper parameters/args from config
+        # NOTE: float() is required to parse any exponentials since YAML sends exponentials as strings
+        m_config = config["models"][m_name]
+        path_to_model_h5 = m_config["model"]
+        path_to_labels = m_config["labels"]
+        model_input_height = m_config["model_input_height"]
+        model_input_width = m_config["model_input_width"]
+        scale = m_config["scale"]
 
-    # Dictionary of the strings that is used to add correct label for each class index in the model's output.
-    # key: index in output
-    # value: string name of class
-    category_index = {}
-    with open(path_to_labels) as labels_f:
-        # we need to sort the labels since this is how keras reads the labels in during training: https://stackoverflow.com/questions/38971293/get-class-labels-from-keras-functional-model
-        idx = 0
-        for line in sorted(labels_f):
-            category_index[idx] = line.strip()
-            idx += 1
+        # Dictionary of the strings that is used to add correct label for each class index in the model's output.
+        # key: index in output
+        # value: string name of class
+        category_index = {}
+        with open(path_to_labels) as labels_f:
+            # we need to sort the labels since this is how keras reads the labels in during training: https://stackoverflow.com/questions/38971293/get-class-labels-from-keras-functional-model
+            idx = 0
+            for line in sorted(labels_f):
+                category_index[idx] = line.strip()
+                idx += 1
 
-    num_classes_resource.init(num_classes=len(category_index.keys()))
+        num_classes_resource.init(num_classes=len(category_index.keys()))
 
-    print("Loading model server.")
-    model = keras.models.load_model(path_to_model_h5)
-    eval_resource.init(model=model,
-                       model_input_height=model_input_height,
-                       model_input_width=model_input_width,
-                       scale=scale,
-                       category_index=category_index)
+        print("Loading model server: {}.".format(m_name))
+        m_config["category_index"] = category_index
+        model = Model(m_config)
+        models[m_name] = model
+    eval_resource.init(models=models)
 
     # # Expose port, transition to gunicorn or similar if needed.
     # print("Making simple server.")
