@@ -149,7 +149,7 @@ class EvalResource(object):
         top_k_scores = class_scores[top_k_scores_idx]
 
         ## return the top-k classes and scores to text file
-        class_labels = [category_index[i] for i in top_k_scores_idx]
+        class_labels = [model.category_index[i] for i in top_k_scores_idx]
 
         # Create the response message
         response = {}
