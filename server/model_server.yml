@@ -8,21 +8,6 @@
 
 models:
   reef_lagoon_live:
-    ## path to model .hdf file
-    #model: ../../model/retrained_model_starting_at_layer_100.h5
-
-    ## path to labels file
-    #labels: ../../model/train_labels_mobilenet_v2.txt
-
-    ## model input height
-    #model_input_height: 224
-
-    ## model input width
-    #model_input_width: 224
-
-    ## factor to scale image pixels by (should be whatever the model was trained with), e.g. 1 ./ scale
-    #scale: 255
-    
     # path to model .hdf file
     model: ../../model/retrained_model_starting_at_layer_249_inception_v3_3_15_2021.h5
 
@@ -37,6 +22,9 @@ models:
 
     # factor to scale image pixels by (should be whatever the model was trained with), e.g. 1 ./ scale
     scale: 255
+
+    # type of model
+    type: image_classification
   reef_lagoon_recording:
     # path to model .hdf file
     model: ../../model/retrained_model_starting_at_layer_249_inception_v3_3_4_2021.h5
@@ -52,3 +40,15 @@ models:
 
     # factor to scale image pixels by (should be whatever the model was trained with), e.g. 1 ./ scale
     scale: 255
+
+    # type of model
+    type: image_classification
+  faster_rcnn_resnet101_coco_2018_01_28_4_05_2021_8857:
+    # path to model .hdf file
+    model: ../../model/faster_rcnn_resnet101_coco_2018_01_28_4_05_2021_8857.pb
+
+    # path to labels file
+    labels: ../../model/faster_rcnn_resnet101_coco_2018_01_28_4_05_2021_8857.pbtxt
+
+    # type of model
+    type: object_detection
