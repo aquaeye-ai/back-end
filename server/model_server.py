@@ -254,29 +254,8 @@ class FindResource(object):
                 detection_classes = output_dict['detection_classes'][0]
                 detection_boxes = output_dict['detection_boxes'][0]
 
-                ## Visualization of the results of a detection.
-
-                # This function groups boxes that correspond to the same location: https://github.com/tensorflow/models/blob/master/research/object_detection/utils/visualization_utils.py
-                print("category_index: ")
-                pp.pprint(model.config['category_index'])
-                vis_util.visualize_boxes_and_labels_on_image_array(
-                        image,
-                        np.asarray(detection_boxes, dtype=np.float32),
-                        np.asarray(detection_classes, dtype=np.int64), # np arrays are double by nature, but this function requires ints for its classes
-                        np.asarray(detection_scores, dtype=np.float32),
-                        model.config['category_index'],
-                        instance_masks=output_dict.get('detection_masks'),
-                        use_normalized_coordinates=True,  # we don't have tiles so we don't need to adjust for tiling box coordinates
-                        line_thickness=4,
-                        min_score_thresh=threshold,
-                        max_boxes_to_draw=None) # None will force the function to look at all boxes in list which is what we want since our list of boxes isn't ordered in any way
-
-                ## Create the response message
-                retval, img_buff = cv2.imencode('.jpg', image)
-
                 response = {}
                 response['id'] = id
-                response['image'] = base64.b64encode(img_buff).decode('utf-8') 
                 response['detection_scores'] = detection_scores.tolist()
                 response['detection_classes'] = detection_classes.tolist()
                 response['detection_boxes'] = detection_boxes.tolist()
