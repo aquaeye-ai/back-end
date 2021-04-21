@@ -340,7 +340,7 @@ if __name__ == 'model_server':
                                         category_index[idx] = line.strip()
                                         idx += 1
                 elif m_type == "object_detection":
-                        category_index = label_map_util.create_category_index_from_labelmap(path_to_labels, use_display_name=True)
+                        category_index = label_map_util.create_category_index_from_labelmap(path_to_labels, use_display_name=False)
 
                 num_classes_resource.init(num_classes=len(category_index.keys()))
 
